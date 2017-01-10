@@ -8,10 +8,11 @@
     android:layout_height="match_parent"
     tools:context="com.github.satoshun.example.rxjava.sample.MainActivity">
 
-    <TextView
+    <Button
+        android:id="@+id/cached_network"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!"
+        android:text="Cached Network"
         app:layout_constraintBottom_toBottomOf="@+id/main_act"
         app:layout_constraintLeft_toLeftOf="@+id/main_act"
         app:layout_constraintRight_toRightOf="@+id/main_act"
