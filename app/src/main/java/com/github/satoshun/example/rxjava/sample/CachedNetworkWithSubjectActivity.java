@@ -37,11 +37,11 @@ public class CachedNetworkWithSubjectActivity extends AppCompatActivity {
     adapter = new SimpleAdapter();
     view.setAdapter(adapter);
 
-    cachedItem();
-    cachedItem2();
+    useAmbOperator();
+    useTimeoutOperator();
   }
 
-  private void cachedItem() {
+  private void useAmbOperator() {
     findViewById(R.id.cached_item_network).setOnClickListener(v ->
         Single.amb(Arrays.asList(cachedItem.firstOrError(), Simulator.singleSlowNetwork()))
             .map(FakeUser::toString)
@@ -51,7 +51,7 @@ public class CachedNetworkWithSubjectActivity extends AppCompatActivity {
             .subscribe(adapter::add));
   }
 
-  private void cachedItem2() {
+  private void useTimeoutOperator() {
     findViewById(R.id.cached_item_network2).setOnClickListener(v ->
         Observable.concat(cachedItem.timeout(1, TimeUnit.MILLISECONDS).onErrorResumeNext(Observable.empty()), Simulator.observableSlowNetwork())
             .firstElement()
