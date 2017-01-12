@@ -23,7 +23,7 @@ public class CachedNetworkWithSubjectActivity extends AppCompatActivity {
     return intent;
   }
 
-  private final BehaviorSubject<User> cachedItem = BehaviorSubject.create();
+  private final BehaviorSubject<FakeUser> cachedItem = BehaviorSubject.create();
 
   private SimpleAdapter adapter;
 
@@ -43,46 +43,22 @@ public class CachedNetworkWithSubjectActivity extends AppCompatActivity {
 
   private void cachedItem() {
     findViewById(R.id.cached_item_network).setOnClickListener(v ->
-        Single.amb(Arrays.asList(cachedItem.firstOrError(), slowNetwork()))
-            .map(User::toString)
+        Single.amb(Arrays.asList(cachedItem.firstOrError(), Simulator.singleSlowNetwork()))
+            .map(FakeUser::toString)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .doOnSuccess(user -> cachedItem.onNext(new User("cached:" + user)))
+            .doOnSuccess(user -> cachedItem.onNext(new FakeUser("cached:" + user)))
             .subscribe(adapter::add));
   }
 
   private void cachedItem2() {
     findViewById(R.id.cached_item_network2).setOnClickListener(v ->
-        Observable.concat(cachedItem.timeout(1, TimeUnit.MILLISECONDS).onErrorResumeNext(Observable.empty()), slowNetwork().toObservable())
+        Observable.concat(cachedItem.timeout(1, TimeUnit.MILLISECONDS).onErrorResumeNext(Observable.empty()), Simulator.observableSlowNetwork())
             .firstElement()
-            .map(User::toString)
+            .map(FakeUser::toString)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .doOnSuccess(user -> cachedItem.onNext(new User("cached2:" + user)))
+            .doOnSuccess(user -> cachedItem.onNext(new FakeUser("cached2:" + user)))
             .subscribe(adapter::add));
-  }
-
-  private static Single<User> slowNetwork() {
-    return Single.fromCallable(() -> {
-      try {
-        Thread.sleep(5000);
-      } catch (Exception e) {
-        // ignore
-      }
-      return new User("slow network");
-    }).subscribeOn(Schedulers.io());
-  }
-
-  private static class User {
-
-    private final String name;
-
-    private User(String name) {
-      this.name = name;
-    }
-
-    @Override public String toString() {
-      return "{user=" + name + "}";
-    }
   }
 }
