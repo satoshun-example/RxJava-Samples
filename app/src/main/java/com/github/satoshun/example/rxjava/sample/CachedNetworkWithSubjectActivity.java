@@ -7,16 +7,21 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 
-import io.reactivex.Observable;
+import java.util.Arrays;
+
+import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subjects.BehaviorSubject;
 
-public class CachedNetworkActivity extends AppCompatActivity {
+public class CachedNetworkWithSubjectActivity extends AppCompatActivity {
 
   static Intent callingIntent(Context context) {
-    Intent intent = new Intent(context, CachedNetworkActivity.class);
+    Intent intent = new Intent(context, CachedNetworkWithSubjectActivity.class);
     return intent;
   }
+
+  private final BehaviorSubject<User> cachedItem = BehaviorSubject.create();
 
   private SimpleAdapter adapter;
 
@@ -30,26 +35,28 @@ public class CachedNetworkActivity extends AppCompatActivity {
     adapter = new SimpleAdapter();
     view.setAdapter(adapter);
 
-    findViewById(R.id.cached_item_network)
-        .setOnClickListener(v -> Observable.concat(fastCachedItem(), slowNetwork())
+    challengeCachedItem();
+  }
+
+  private void challengeCachedItem() {
+    findViewById(R.id.cached_item_network).setOnClickListener(v ->
+        Single.amb(Arrays.asList(cachedItem.firstOrError(), slowNetwork()))
+            .map(User::toString)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .map(User::toString)
+            .doOnSuccess(user -> cachedItem.onNext(new User("cached:" + user)))
             .subscribe(adapter::add));
   }
 
-  private static Observable<User> fastCachedItem() {
-    return Observable.fromCallable(() -> {
-      Thread.sleep(500);
-      return new User("fast cached item");
-    });
-  }
-
-  private static Observable<User> slowNetwork() {
-    return Observable.fromCallable(() -> {
-      Thread.sleep(5000);
+  private static Single<User> slowNetwork() {
+    return Single.fromCallable(() -> {
+      try {
+        Thread.sleep(5000);
+      } catch (Exception e) {
+        // ignore
+      }
       return new User("slow network");
-    });
+    }).subscribeOn(Schedulers.io());
   }
 
   private static class User {

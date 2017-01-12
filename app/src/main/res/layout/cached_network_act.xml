@@ -5,13 +5,13 @@
     android:id="@+id/cached_network_act"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.github.satoshun.example.rxjava.sample.CachedNetworkActivity">
+    tools:context="com.github.satoshun.example.rxjava.sample.CachedNetworkWithSubjectActivity">
 
     <Button
         android:id="@+id/cached_item_network"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="slow network with cached item" />
+        android:text="Slow network with cached item" />
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/log"
