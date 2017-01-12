@@ -8,7 +8,9 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
+import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
@@ -35,16 +37,28 @@ public class CachedNetworkWithSubjectActivity extends AppCompatActivity {
     adapter = new SimpleAdapter();
     view.setAdapter(adapter);
 
-    challengeCachedItem();
+    cachedItem();
+    cachedItem2();
   }
 
-  private void challengeCachedItem() {
+  private void cachedItem() {
     findViewById(R.id.cached_item_network).setOnClickListener(v ->
         Single.amb(Arrays.asList(cachedItem.firstOrError(), slowNetwork()))
             .map(User::toString)
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .doOnSuccess(user -> cachedItem.onNext(new User("cached:" + user)))
+            .subscribe(adapter::add));
+  }
+
+  private void cachedItem2() {
+    findViewById(R.id.cached_item_network2).setOnClickListener(v ->
+        Observable.concat(cachedItem.timeout(1, TimeUnit.MILLISECONDS).onErrorResumeNext(Observable.empty()), slowNetwork().toObservable())
+            .firstElement()
+            .map(User::toString)
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .doOnSuccess(user -> cachedItem.onNext(new User("cached2:" + user)))
             .subscribe(adapter::add));
   }
 
