@@ -12,5 +12,6 @@ public class MainActivity extends AppCompatActivity {
 
     // todo use RxBinding
     findViewById(R.id.cached_network).setOnClickListener(v -> startActivity(CachedNetworkWithSubjectActivity.callingIntent(this)));
+    findViewById(R.id.recycler_view).setOnClickListener(v -> startActivity(RecyclerViewActivity.callingIntent(this)));
   }
 }
