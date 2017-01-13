@@ -9,13 +9,10 @@ import android.support.v7.widget.RecyclerView;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.trello.rxlifecycle2.LifecycleTransformer;
-import com.trello.rxlifecycle2.RxLifecycle;
 import com.trello.rxlifecycle2.android.ActivityEvent;
 
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
-import io.reactivex.subjects.PublishSubject;
 
 public class RecyclerViewActivity extends AppCompatActivity {
 
@@ -37,12 +34,10 @@ public class RecyclerViewActivity extends AppCompatActivity {
     recyclerView.setAdapter(new Adapter());
   }
 
-  static class Adapter extends RecyclerView.Adapter<ThisViewHolder> {
+  static class Adapter extends LifeCycleAdapter<ThisViewHolder> {
 
     @Override public ThisViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-      ThisViewHolder holder = new ThisViewHolder(new TextView(parent.getContext()));
-      holder.lifecycle(ActivityEvent.CREATE);
-      return holder;
+      return new ThisViewHolder(new TextView(parent.getContext()));
     }
 
     @Override public void onBindViewHolder(ThisViewHolder holder, int position) {
@@ -52,21 +47,10 @@ public class RecyclerViewActivity extends AppCompatActivity {
     @Override public int getItemCount() {
       return Integer.MAX_VALUE;
     }
-
-    @Override public void onViewAttachedToWindow(ThisViewHolder holder) {
-      super.onViewAttachedToWindow(holder);
-      holder.lifecycle(ActivityEvent.START);
-    }
-
-    @Override public void onViewDetachedFromWindow(ThisViewHolder holder) {
-      super.onViewDetachedFromWindow(holder);
-      holder.lifecycle(ActivityEvent.STOP);
-    }
   }
 
-  static class ThisViewHolder extends RecyclerView.ViewHolder {
+  static class ThisViewHolder extends LifeCycleViewHolder<String> {
 
-    private final PublishSubject<ActivityEvent> lifecycle = PublishSubject.create();
     private final TextView root;
 
     ThisViewHolder(TextView itemView) {
@@ -74,11 +58,8 @@ public class RecyclerViewActivity extends AppCompatActivity {
       root = itemView;
     }
 
-    void lifecycle(ActivityEvent event) {
-      lifecycle.onNext(event);
-    }
-
-    void bind(String data) {
+    @Override
+    public void bind(String data) {
       Simulator.observableSlowNetwork(data)
           .compose(bindUntilEvent(ActivityEvent.STOP))
           .subscribeOn(Schedulers.io())
@@ -86,10 +67,6 @@ public class RecyclerViewActivity extends AppCompatActivity {
           .doOnSubscribe(d -> root.setText(""))
           .map(FakeUser::toString)
           .subscribe(root::setText);
-    }
-
-    protected <T> LifecycleTransformer<T> bindUntilEvent(ActivityEvent event) {
-      return RxLifecycle.bindUntilEvent(lifecycle, event);
     }
   }
 }
